@@ -1,63 +1,108 @@
-# Actions
-用于自动化处理白嫖EPIC免费游戏
+# EpicGames Freebies Claimer
+![image](https://user-images.githubusercontent.com/4411977/74479432-6a6d1b00-4eaf-11ea-930f-1b89e7135887.png)
 
-## 使用过程
-1. 下载[DeviceAuthGenerator](https://github.com/xMistt/DeviceAuthGenerator/releases/)
-2. 运行程序,在出现的页面里登录Epic账户,然后授权。完成后会出现一个 `device_auths.json`文件
-3. Fork或者手动导入这个Repo,看你喜好(防止被Github一锅端)
-4. 启用Actions,新建一个叫做`AUTH_JSON`的Secret,并将之前的`device_auths.json`文件内容粘贴进去。
-5. 修改.github/workflows/claim.yml文件,改改自动领取时间什么的。
-   
-schedule:
-    - cron:  '51 16 * * 4'    #修改成其他时间（4改成*就是每天执行一次的意思）
- 
+## Description
+Claim [available free game promotions](https://www.epicgames.com/store/free-games) from the Epic Games Store.
 
-## 多账户
-最后获得的json大概长这样
+## Requirements
+ * [DeviceAuthGenerator](https://github.com/xMistt/DeviceAuthGenerator/releases)
+ * [Git](https://git-scm.com/downloads)
+ * [Node.js](https://nodejs.org/download/) (with build tools checked)
 
-```
-{
-    "mcseekeri": {
-        "device_id": "114514",
-        "account_id": "1919810",
-        "secret": "893",
-        "user_agent": "DeviceAuthGenerator/1.1.0 Windows/10.0.19041",
-        "created": {
-            "location": "Neverland",
-            "ip_address": "114.51.45.14",
-            "datetime": "1970-01-01T00:00:00.000Z"
-        }
-    }
-}
-```
+## Instructions - Quick
+0. (Optional) ☆ Star this project :)
+1. Download/clone this repository
+2. Run `npm install`
+3. Generate `device_auths.json` (using [DeviceAuthGenerator](https://github.com/xMistt/DeviceAuthGenerator))
+4. (Optional) Edit `config.json`
+5. Run `npm start`
 
-如果要多账户签到,那么需要修改成这样。
+## Instructions - Detailed
+Check out the [wiki](https://github.com/Revadike/epicgames-freebies-claimer/wiki), written by @lucifudge.
 
-```
-{
-    "mcseekeri": {
-        "device_id": "114514",
-        "account_id": "1919810",
-        "secret": "893",
-        "user_agent": "DeviceAuthGenerator/1.1.0 Windows/10.0.19041",
-        "created": {
-            "location": "Neverland",
-            "ip_address": "114.51.45.14",
-            "datetime": "1970-01-01T00:00:00.000Z"
-        }
-    },
-    "mcseekeri2333": {
-        "device_id": "114514",
-        "account_id": "1919810",
-        "secret": "893",
-        "user_agent": "DeviceAuthGenerator/1.1.0 Windows/10.0.19041",
-        "created": {
-            "location": "Neverland",
-            "ip_address": "114.51.45.14",
-            "datetime": "1970-01-01T00:00:00.000Z"
-        }
-    }
-}
-```
-## 致谢
-感谢[Revadike大佬](https://github.com/Revadike)的[epicgames-freebies-claimer](https://github.com/Revadike/epicgames-freebies-claimer),本Repo是在他程序的基础上修改而来的。
+## Instructions - Docker
+Check out the [wiki](https://github.com/Revadike/epicgames-freebies-claimer/wiki/User-Guide-(Docker)), written by @jackblk.
+
+## FAQ
+### Why should I use this?
+This is for the truly lazy, you know who you are. ;)
+Also, this is a good alternative, in case you don't like using Epic's client or website (and I don't blame you).
+
+### Why should I even bother claiming these free games?
+To which I will say, why not? Most of these games are actually outstanding games! Even if you don't like Epic and their shenanigans, you will be pleased to know that Epic actually funds all the free copies that are given away:  ["But we actually found it was more economical to pay developers [a lump sum] to distribute their game free for two weeks..."](https://arstechnica.com/gaming/2019/03/epic-ceo-youre-going-to-see-lower-prices-on-epic-games-store/)
+
+## Changelog
+### V1.5.5
+ * Fixed testing (#137)
+ * Fixed getting slug (for addons) (#134 #135 #136)
+### V1.5.4
+ * Create data directory to improve k8s convenience (#123)
+ * Added optional Pushbullet notifications, if `pushbulletApiKey` option is present in `config.json` (#131)
+
+### V1.5.3
+ * Fixed missing history.json
+
+### V1.5.2
+ * Fixed a looping issue
+
+### V1.5.1
+ * Added docker support (#105)
+ * Fixed getting wrong offer (#107 #108)
+ * No longer logs in to check for new freebies (#109)
+ * Keep track of claimed freebies history (#110)
+
+### V1.5.0
+ * Fixed login
+ * Fixed purchase (claiming)
+ * Removed ownership check (broken)
+ * Removed unneeded dependencies
+ * Code restyling
+
+### V1.4.1
+ * Removed the need for graphql query
+
+### V1.4.0
+ * Added two factor authentication (2fa) support while EpicGames changed policy (#17 #19 #21)
+ * Added update checker (#20)
+
+### V1.3.0
+ * Changed method of obtaining free games list (#13)
+ * Added better logger (#14)
+
+### V1.2.3
+ * Small bugfix
+
+### V1.2.2
+ * Added looping feature a.k.a. run forever* (#2)
+ * Added multi-account support*
+
+*Please update your config accordingly
+
+### V1.2.1
+ * Makes `rememberLastSession` optional in config or launch parameter (#8)
+ * Added ESLint linter
+
+### V1.2.0
+ * Now allows web login, if normal login fails, e.g. due to captcha (#3)
+
+*Please run `npm install` again, to install `epicgames-client-login-adapter`, required to utilize this new feature
+
+### V1.1.2
+ * Enables `rememberLastSession` by default* (#4)
+
+*Please run `npm update` to update `epicgames-client`, required to utilize this new feature
+
+### V1.1.1
+ * Ensured all search results for all namespaces are purchased
+
+### V1.1.0
+ * Added support for email/password arguments
+ * Moved saved credentials to config.json
+ * Ensured all search results are returned
+ * Fixed program not exiting
+
+### V1.0.0
+ * Initial release
+
+## Happy Freebie Claiming!
+![image](https://user-images.githubusercontent.com/4411977/122922274-bb263b00-d363-11eb-8b82-8a3ed6e7e29d.png)

@@ -4,10 +4,10 @@ const { "Launcher": EpicGames } = require("epicgames-client");
 const { freeGamesPromotions } = require("./src/gamePromotions");
 const { writeFile } = require("fs");
 
-const Auths = require(`${__dirname}/device_auths.json`);
+const Auths = require(`${__dirname}/data/device_auths.json`);
 const CheckUpdate = require("check-update-github");
-const Config = require(`${__dirname}/config.json`);
-const History = require(`${__dirname}/history.json`);
+const Config = require(`${__dirname}/data/config.json`);
+const History = require(`${__dirname}/data/history.json`);
 const Logger = require("tracer").console(`${__dirname}/logger.js`);
 const Package = require("./package.json");
 
@@ -38,7 +38,18 @@ function sleep(delay) {
 }
 
 (async() => {
-    let { options, delay, loop } = Config;
+    let { options, delay, loop, pushbulletApiKey } = Config;
+
+    let pusher = null;
+    if (pushbulletApiKey) {
+        try {
+            const PushBullet = require("pushbullet");
+            pusher = new PushBullet(pushbulletApiKey);
+        } catch (err) {
+            Logger.error("Package 'pushbullet' is not installed, but 'pushbulletApiKey' was set in config");
+        }
+    }
+
     do {
         if (!await isUpToDate()) {
             Logger.warn(`There is a new version available: ${Package.url}`);
@@ -47,8 +58,10 @@ function sleep(delay) {
         for (let email in Auths) {
             let { country } = Auths[email];
             let claimedPromos = History[email] || [];
+            let newlyClaimedPromos = [];
             let useDeviceAuth = true;
-            let clientOptions = { email, ...options };
+            let rememberDevicesPath = `${__dirname}/data/device_auths.json`;
+            let clientOptions = { email, ...options, rememberDevicesPath };
             let client = new EpicGames(clientOptions);
             if (!await client.init()) {
                 Logger.error("Error while initialize process.");
@@ -81,6 +94,7 @@ function sleep(delay) {
                     let purchased = await client.purchase(offer, 1);
                     if (purchased) {
                         Logger.info(`Successfully claimed ${offer.title} (${purchased})`);
+                        newlyClaimedPromos.push(offer);
                     } else {
                         Logger.warn(`${offer.title} was already claimed for this account`);
                     }
@@ -100,11 +114,21 @@ function sleep(delay) {
             }
 
             History[email] = claimedPromos;
+            if (pusher && newlyClaimedPromos.length > 0) {
+                let notification = newlyClaimedPromos.map((promo) => promo.title).join(", ");
+                try {
+                    await pusher.note({}, "New freebies claimed on Epic Games Store", notification);
+                    Logger.info("Push notification sent");
+                } catch (err) {
+                    Logger.error(`Failed to send push notification (${err})`);
+                }
+            }
+
             await client.logout();
             Logger.info(`Logged ${client.account.name} out of Epic Games`);
         }
 
-        await write(`${__dirname}/history.json`, JSON.stringify(History, null, 4));
+        await write(`${__dirname}/data/history.json`, JSON.stringify(History, null, 4));
         if (loop) {
             Logger.info(`Waiting ${delay} minutes`);
             await sleep(delay);
